@@ -1,0 +1,25 @@
+name: test-youtube
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test network
+        run: |
+          python3 - <<'PY'
+          import requests
+
+          for url in [
+              "https://www.google.com",
+              "https://www.youtube.com"
+          ]:
+              try:
+                  r=requests.get(url,timeout=20)
+                  print(url, r.status_code)
+              except Exception as e:
+                  print(url, "FAILED", e)
+          PY
