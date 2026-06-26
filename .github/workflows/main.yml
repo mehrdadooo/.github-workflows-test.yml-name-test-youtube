@@ -1,32 +1,58 @@
-name: Test yt-dlp download
+name: yt-dlp-test
 
 on:
   workflow_dispatch:
 
 jobs:
-  download-test:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check Python
-        run: |
-          python3 --version
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install yt-dlp
+      - name: Install
         run: |
-          pip install -U yt-dlp
+          python3 -m pip install -U yt-dlp
+          sudo apt update
+          sudo apt install -y ffmpeg
 
-      - name: Test extract
+      - name: Check network
         run: |
-          yt-dlp -F "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+          python3 - <<'PY'
+          import requests
+          for url in [
+              "https://www.google.com",
+              "https://www.youtube.com"
+          ]:
+              try:
+                  r=requests.get(url,timeout=20)
+                  print(url, r.status_code)
+              except Exception as e:
+                  print(url,"FAILED",e)
+          PY
 
-      - name: Test download small
+      - name: Test YouTube formats with cookies
         run: |
           yt-dlp \
-          -f "worstaudio/worst" \
-          -o "test.%(ext)s" \
+          --cookies cookies.txt \
+          --no-check-certificates \
+          --force-ipv4 \
+          --extractor-args "youtube:player_client=android" \
+          -F \
           "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
 
-      - name: Show files
+      - name: Download test
+        run: |
+          yt-dlp \
+          --cookies cookies.txt \
+          --no-check-certificates \
+          --force-ipv4 \
+          --extractor-args "youtube:player_client=android" \
+          -f "best[height<=720]" \
+          -o "video.%(ext)s" \
+          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+
+      - name: Show file
         run: |
           ls -lh
