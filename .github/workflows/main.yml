@@ -1,42 +1,21 @@
-name: yt-dlp-test
+- name: Install yt-dlp dependencies
+  run: |
+    sudo apt update
+    sudo apt install -y ffmpeg nodejs npm
+    python3 -m pip install -U yt-dlp
+    yt-dlp --version
 
-on:
-  workflow_dispatch:
+- name: Install JS runtime for yt-dlp
+  run: |
+    npm install -g deno
 
-jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install
-        run: |
-          python3 -m pip install -U yt-dlp
-          sudo apt update
-          sudo apt install -y ffmpeg
-
-      - name: Test YouTube
-        run: |
-          yt-dlp \
-          --cookies cookies.txt \
-          --no-check-certificates \
-          --force-ipv4 \
-          --extractor-args "youtube:player_client=web" \
-          -F \
-          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
-
-      - name: Download
-        run: |
-          yt-dlp \
-          --cookies cookies.txt \
-          --no-check-certificates \
-          --force-ipv4 \
-          --extractor-args "youtube:player_client=web" \
-          -f "best[height<=720]/best" \
-          -o "video.%(ext)s" \
-          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
-
-      - name: Check file
-        run: |
-          ls -lh
+- name: Test
+  run: |
+    yt-dlp \
+    --cookies cookies.txt \
+    --js-runtimes deno \
+    --no-check-certificates \
+    --force-ipv4 \
+    --extractor-args "youtube:player_client=web" \
+    -F \
+    "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
