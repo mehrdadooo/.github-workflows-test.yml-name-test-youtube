@@ -1,25 +1,32 @@
-name: test-youtube
+name: Test yt-dlp download
 
 on:
   workflow_dispatch:
 
 jobs:
-  test:
+  download-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test network
+      - name: Check Python
         run: |
-          python3 - <<'PY'
-          import requests
+          python3 --version
 
-          for url in [
-              "https://www.google.com",
-              "https://www.youtube.com"
-          ]:
-              try:
-                  r=requests.get(url,timeout=20)
-                  print(url, r.status_code)
-              except Exception as e:
-                  print(url, "FAILED", e)
-          PY
+      - name: Install yt-dlp
+        run: |
+          pip install -U yt-dlp
+
+      - name: Test extract
+        run: |
+          yt-dlp -F "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+
+      - name: Test download small
+        run: |
+          yt-dlp \
+          -f "worstaudio/worst" \
+          -o "test.%(ext)s" \
+          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+
+      - name: Show files
+        run: |
+          ls -lh
