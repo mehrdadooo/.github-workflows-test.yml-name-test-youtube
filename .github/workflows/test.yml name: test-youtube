@@ -1,21 +1,77 @@
-- name: Install yt-dlp dependencies
-  run: |
-    sudo apt update
-    sudo apt install -y ffmpeg nodejs npm
-    python3 -m pip install -U yt-dlp
-    yt-dlp --version
+name: YouTube Downloader Test
 
-- name: Install JS runtime for yt-dlp
-  run: |
-    npm install -g deno
+on:
+  workflow_dispatch:
 
-- name: Test
-  run: |
-    yt-dlp \
-    --cookies cookies.txt \
-    --js-runtimes deno \
-    --no-check-certificates \
-    --force-ipv4 \
-    --extractor-args "youtube:player_client=web" \
-    -F \
-    "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+
+      - name: Install tools
+        run: |
+          sudo apt update
+          sudo apt install -y ffmpeg nodejs npm
+
+          python3 -m pip install --upgrade pip
+          pip install -U yt-dlp
+
+
+      - name: Install Deno JS runtime
+        run: |
+          npm install -g deno
+
+          deno --version
+          yt-dlp --version
+
+
+      - name: Check YouTube connection
+        run: |
+          python3 - <<'PY'
+          import requests
+
+          for url in [
+              "https://www.google.com",
+              "https://www.youtube.com"
+          ]:
+              try:
+                  r=requests.get(url,timeout=20)
+                  print(url,r.status_code)
+              except Exception as e:
+                  print(url,"FAILED",e)
+          PY
+
+
+      - name: Download formats test
+        run: |
+          yt-dlp \
+          --cookies cookies.txt \
+          --js-runtimes deno \
+          --no-check-certificates \
+          --force-ipv4 \
+          --extractor-args "youtube:player_client=web" \
+          -F \
+          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+
+
+      - name: Download video
+        run: |
+          yt-dlp \
+          --cookies cookies.txt \
+          --js-runtimes deno \
+          --no-check-certificates \
+          --force-ipv4 \
+          --extractor-args "youtube:player_client=web" \
+          -f "best[height<=720]/best" \
+          -o "video.%(ext)s" \
+          "https://youtu.be/-6a9RSBeADw?si=x2jOGjwY3exVVADnv"
+
+
+      - name: Show result
+        run: |
+          ls -lh
